@@ -1,59 +1,36 @@
 import streamlit as st
-from collections import defaultdict
 
 st.set_page_config(
-    page_title="RNN Next Word Predictor",
-    page_icon="🔤"
+    page_title="RNN Sentiment Analysis",
+    page_icon="🎬"
 )
 
-st.title("🔤 RNN Next Word Prediction")
+st.title("🎬 RNN Movie Review Sentiment Analysis")
 
-st.write(
-    "Enter a word and predict the next likely word."
+review = st.text_area(
+    "Enter a movie review"
 )
 
-corpus = """
-machine learning is amazing
-machine learning is powerful
-deep learning uses neural networks
-deep learning is a subset of machine learning
-artificial intelligence uses machine learning
-neural networks are powerful
-"""
+if st.button("Analyze"):
 
-words = corpus.lower().split()
+    positive_words = [
+        "good",
+        "great",
+        "excellent",
+        "amazing",
+        "love",
+        "wonderful"
+    ]
 
-model = defaultdict(list)
+    score = 0
 
-for i in range(len(words) - 1):
-    model[words[i]].append(words[i + 1])
+    text = review.lower()
 
-word = st.text_input(
-    "Enter a word",
-    "machine"
-).lower()
+    for word in positive_words:
+        if word in text:
+            score += 1
 
-if st.button("Predict Next Word"):
-
-    if word in model:
-
-        next_words = model[word]
-
-        freq = {}
-
-        for w in next_words:
-            freq[w] = freq.get(w, 0) + 1
-
-        prediction = max(freq, key=freq.get)
-
-        st.success(
-            f"Predicted Next Word: {prediction}"
-        )
-
-        st.write("Possible Next Words:")
-
-        for w in set(next_words):
-            st.write("-", w)
-
+    if score > 0:
+        st.success("Positive Review")
     else:
-        st.error("Word not found in vocabulary.")
+        st.error("Negative Review")
