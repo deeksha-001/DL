@@ -1,60 +1,59 @@
 import streamlit as st
-import numpy as np
-import joblib
-
-from tensorflow.keras.models import load_model
+import pandas as pd
 from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
 
-st.set_page_config(
-    page_title="ANN Cancer Prediction",
-    page_icon="🧠",
-    layout="wide"
-)
+st.set_page_config(page_title="ANN Classifier", page_icon="🧠")
 
-model = load_model("ann_model.h5")
-scaler = joblib.load("scaler.pkl")
+st.title("🧠 ANN Breast Cancer Prediction")
 
 data = load_breast_cancer()
 
-feature_names = data.feature_names
+X = pd.DataFrame(data.data, columns=data.feature_names)
+y = data.target
 
-st.title("🧠 ANN Cancer Prediction")
-
-st.write(
-    "Artificial Neural Network trained on Breast Cancer Dataset."
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
 )
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+model = MLPClassifier(
+    hidden_layer_sizes=(64, 32),
+    max_iter=500,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+acc = accuracy_score(y_test, model.predict(X_test))
+
+st.success(f"Model Accuracy: {acc:.2%}")
+
+st.subheader("Enter Feature Values")
 
 inputs = []
 
-col1, col2 = st.columns(2)
-
-for i in range(15):
-    value = col1.number_input(
-        feature_names[i],
-        value=float(data.data[:, i].mean())
+for i, feature in enumerate(data.feature_names):
+    val = st.number_input(
+        feature,
+        value=float(X.iloc[:, i].mean())
     )
-    inputs.append(value)
-
-for i in range(15, 30):
-    value = col2.number_input(
-        feature_names[i],
-        value=float(data.data[:, i].mean())
-    )
-    inputs.append(value)
+    inputs.append(val)
 
 if st.button("Predict"):
 
-    arr = np.array(inputs).reshape(1, -1)
+    sample = scaler.transform([inputs])
 
-    arr = scaler.transform(arr)
+    prediction = model.predict(sample)[0]
 
-    pred = model.predict(arr)[0][0]
-
-    if pred > 0.5:
-        st.success(
-            f"Benign (Non-Cancerous)\n\nConfidence: {pred:.2%}"
-        )
+    if prediction == 1:
+        st.success("Prediction: Benign")
     else:
-        st.error(
-            f"Malignant (Cancerous)\n\nConfidence: {(1-pred):.2%}"
-        )
+        st.error("Prediction: Malignant")
