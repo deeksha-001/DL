@@ -1,59 +1,41 @@
 import streamlit as st
-import pandas as pd
-from sklearn.datasets import load_breast_cancer
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score
+import numpy as np
 
-st.set_page_config(page_title="ANN Classifier", page_icon="🧠")
-
-st.title("🧠 ANN Breast Cancer Prediction")
-
-data = load_breast_cancer()
-
-X = pd.DataFrame(data.data, columns=data.feature_names)
-y = data.target
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
+st.set_page_config(
+    page_title="ANN Demo",
+    page_icon="🧠"
 )
 
-scaler = StandardScaler()
+st.title("🧠 Artificial Neural Network Demo")
 
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
-
-model = MLPClassifier(
-    hidden_layer_sizes=(64, 32),
-    max_iter=500,
-    random_state=42
+st.write(
+    "Simple ANN forward propagation demonstration."
 )
 
-model.fit(X_train, y_train)
+x1 = st.slider("Input X1", 0.0, 10.0, 5.0)
+x2 = st.slider("Input X2", 0.0, 10.0, 5.0)
 
-acc = accuracy_score(y_test, model.predict(X_test))
+w11, w12 = 0.8, 0.4
+w21, w22 = 0.3, 0.9
 
-st.success(f"Model Accuracy: {acc:.2%}")
+h1 = max(0, x1*w11 + x2*w21)
+h2 = max(0, x1*w12 + x2*w22)
 
-st.subheader("Enter Feature Values")
+output = 1/(1 + np.exp(-(0.7*h1 + 0.5*h2)))
 
-inputs = []
+st.subheader("Hidden Layer")
 
-for i, feature in enumerate(data.feature_names):
-    val = st.number_input(
-        feature,
-        value=float(X.iloc[:, i].mean())
-    )
-    inputs.append(val)
+st.write("Neuron 1:", round(h1, 3))
+st.write("Neuron 2:", round(h2, 3))
 
-if st.button("Predict"):
+st.subheader("Output Layer")
 
-    sample = scaler.transform([inputs])
+st.metric(
+    "Prediction Probability",
+    f"{output:.2%}"
+)
 
-    prediction = model.predict(sample)[0]
-
-    if prediction == 1:
-        st.success("Prediction: Benign")
-    else:
-        st.error("Prediction: Malignant")
+if output > 0.5:
+    st.success("Class 1")
+else:
+    st.error("Class 0")
